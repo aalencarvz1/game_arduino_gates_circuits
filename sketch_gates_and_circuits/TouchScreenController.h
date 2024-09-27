@@ -6,7 +6,6 @@
 #include "LambdaCallback.h"
 #include "Utils.h"
 #include "DoubleLinkedList.h"
-#include "VisualComponent.h"
 
 
 //para armazenar informações referente ao dimensionmanto (bounds) de textos em tela
@@ -15,24 +14,7 @@ struct TextInfo{
   double w, h;  
 };
 
-
-struct TouchScreenClickEvent {
-  int id = -1;
-  VisualComponent* component = nullptr;
-  bool enabled = true;
-  void (*staticOnClick)() = nullptr;
-  ICallback* onClickCallback = nullptr;  // Ponteiro para o callback
-
-  TouchScreenClickEvent(
-    VisualComponent* pComponent = nullptr,
-    void (*pStaticOnClick)() = nullptr,
-    ICallback* pOnClickCallback = nullptr
-  );  
-
-  ~TouchScreenClickEvent();
-  bool checkClickEvent(DPoint point);
-};
-
+class ClickEvent; //forward declaration to avoid circular dependency
 
 struct TouchScreenController {
   static int nextEventId;
@@ -54,16 +36,54 @@ struct TouchScreenController {
 
   static MCUFRIEND_kbv tft;
 
-  static DoubleLinkedList<TouchScreenClickEvent>* touchScreenClickEvents;// = new DoubleLinkedList<TouchScreenClickEvent>();
+  static DoubleLinkedList<ClickEvent>* clickEvents;
 
 
   static void init();
   static int getNextEventId();
-  static TextInfo drawCenteredText(char* text, double y = 0, double centerX = TouchScreenController::tft.width() * 1.0 / 2.0, double textSize = 2, int color = TFT_WHITE);
-  static void drawRoundButton(double x,double y,double r,int color,char* text="", bool hasCenterPlay=true, bool hasBorder=true, double textDistance = 20, void (*onClick)() = nullptr);
-  static void drawSmoothArc(double x_center, double y_center, double radius, double start_angle, double end_angle, uint16_t color = TFT_WHITE);
-  static CircleInfo drawArcFromArrow(double x1, double y1, double x2, double y2, double arcHeight, int color = TFT_WHITE);
-  static void drawRoundedPlay(double cx,double cy,double r,double round = 0,int backgroundColor = TFT_BLACK,int color = TFT_WHITE,double multiplier = 1);
+  static TextInfo drawCenteredText(
+    const char* text, 
+    const double& y = 0, 
+    const double& centerX = TouchScreenController::tft.width() * 1.0 / 2.0, 
+    const double& textSize = 2, 
+    const int& color = TFT_WHITE
+  );
+  /*static void drawRoundButton(
+    const double& x,
+    const double& y,
+    const double& r,
+    const int& color,
+    const char* text="", 
+    const bool& hasCenterPlay=true, 
+    const bool& hasBorder=true, 
+    const double& textDistance = 20, 
+    void (*onClick)() = nullptr
+  );*/
+  /*static void drawSmoothArc(
+    const double& x_center, 
+    const double& y_center, 
+    const double& radius, 
+    const double& start_angle, 
+    const double& end_angle, 
+    const uint16_t& color = TFT_WHITE
+  );*/
+  /*static CircleInfo drawArcFromArrow(
+    const double& x1, 
+    const double& y1, 
+    const double& x2, 
+    const double& y2, 
+    const double& arcHeight, 
+    const int& color = TFT_WHITE
+  );*/
+  static void drawRoundedPlay(
+    const double& cx,
+    const double& cy,
+    const double& r,
+    const double& round = 0,
+    const int& backgroundColor = TFT_BLACK,
+    const int& color = TFT_WHITE,
+    const double& multiplier = 1
+  );
 
 };
 

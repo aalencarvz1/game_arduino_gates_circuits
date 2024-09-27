@@ -15,11 +15,17 @@ struct CircleInfo {
   double x,y,r;
 };
 
-String boolToString(bool v);
+String boolToString(const bool& v);
 void toUpperCase(char* str);
 void toLowerCase(char* str);
-double getArcAngle(double corda, double raio);
-double getCatetoFromPitagoras(double hip, double cat1);
-DPoint calcularP3(double a, double b, double c, DPoint p1, DPoint p2);
+double getArcAngle(const double& corda, const double& raio);
+double getCatetoFromPitagoras(const double& hip, const double&  cat1);
+DPoint calcularP3(
+  const double& a, 
+  const double& b, 
+  const double& c, 
+  const DPoint& p1, 
+  const DPoint& p2
+);
 
 #endif // UTILS_H

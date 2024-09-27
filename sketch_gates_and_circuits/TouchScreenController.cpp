@@ -1,70 +1,13 @@
 #include "TouchScreenController.h"
 #include <math.h>
+#include "ClickEvent.h"
 
 
 //STATIC INITIALIZATIONS
 int TouchScreenController::nextEventId = -1;
 MCUFRIEND_kbv TouchScreenController::tft;
 TouchScreen TouchScreenController::ts = TouchScreen(TouchScreenController::TS_XP, TouchScreenController::TS_YP, TouchScreenController::TS_XM, TouchScreenController::TS_YM, 300);
-DoubleLinkedList<TouchScreenClickEvent>* TouchScreenController::touchScreenClickEvents = nullptr;
-
-
-/**
-* TouchScreenClickEvent
-*/
-TouchScreenClickEvent::TouchScreenClickEvent(
-  VisualComponent* pComponent,
-  void (*pStaticOnClick)(),
-  ICallback* pOnClickCallback
-) :
-  component(pComponent),
-  staticOnClick(pStaticOnClick),
-  onClickCallback(pOnClickCallback)
-{
-  Serial.println(F("INIT TouchScreenClickEvent::TouchScreenClickEvent"));
-  id = TouchScreenController::getNextEventId();
-  TouchScreenController::touchScreenClickEvents->add(this);
-  Serial.println(F("END TouchScreenClickEvent::TouchScreenClickEvent"));
-};
-
-TouchScreenClickEvent::~TouchScreenClickEvent(){
-  Serial.println(F("INIT TouchScreenClickEvent::~TouchScreenClickEvent"));
-  /*if (staticOnClick != nullptr) { cannot delete function
-    delete staticOnClick;
-  }*/
-  if (onClickCallback != nullptr) {
-    delete onClickCallback;
-  }
-  TouchScreenController::touchScreenClickEvents->remove(this,false);
-  Serial.println(F("END TouchScreenClickEvent::~TouchScreenClickEvent"));
-}
-
-//verifica se o elemento foi clicado com base no ponto central e raio definido
-bool TouchScreenClickEvent::checkClickEvent(DPoint point) {
-  Serial.println(F("INIT TouchScreenClickEvent::checkClickEvent"));
-  bool result = false;
-  if (enabled) {
-    if (component != nullptr) {  
-      if (component->isCircular) {
-        if (abs(component->getX() - point.x) <= component->getR() && abs(component->getY() - point.y) <= component->getR()) {
-          result = true;
-        }
-      } else {
-        
-      }  
-      if (result = true) {    
-        if (onClickCallback != nullptr) {
-          onClickCallback->call();  // Chama a função encapsulada
-        } else if (staticOnClick != nullptr) {
-          staticOnClick();
-        }
-        Serial.println(F("END TouchScreenClickEvent::checkClickEvent"));
-      }
-    }
-  }
-  Serial.println(F("END TouchScreenClickEvent::checkClickEvent"));
-  return result;
-};
+DoubleLinkedList<ClickEvent>* TouchScreenController::clickEvents = nullptr;
 
 
 /**
@@ -74,14 +17,14 @@ void TouchScreenController::init(){
     // Configuração do touchscreen
     // Inicializa o TFT    
     uint16_t identifier = tft.readID();
-    Serial.println("TFT SHIELD IDENTIFIER: "+String(identifier));
+    //Serial.println("TFT SHIELD IDENTIFIER: "+String(identifier));
     if (identifier == 0x9325 || identifier == 0x9341 || identifier == 0x9486 || identifier == 0x7796) {
       tft.begin(identifier);
     } else {
       tft.begin(0x9486);  // Força o uso de um controlador comum, se necessário
     }
     tft.setRotation(1);  // Ajuste a rotação conforme necessário
-    touchScreenClickEvents = new DoubleLinkedList<TouchScreenClickEvent>("TouchScreenClickEvent");
+    clickEvents = new DoubleLinkedList<ClickEvent>("ClickEvent");
 };
 
 int TouchScreenController::getNextEventId(){
@@ -89,7 +32,13 @@ int TouchScreenController::getNextEventId(){
   return nextEventId;
 }
 
-TextInfo TouchScreenController::drawCenteredText(char* text, double y, double centerX, double textSize, int color) {
+TextInfo TouchScreenController::drawCenteredText(
+  const char* text, 
+  const double& y = 0, 
+  const double& centerX = TouchScreenController::tft.width() * 1.0 / 2.0, 
+  const double& textSize = 2, 
+  const int& color = TFT_WHITE
+) {
     // Defina o tamanho da fonte
     tft.setTextSize(textSize);
     tft.setTextColor(color);
@@ -102,7 +51,7 @@ TextInfo TouchScreenController::drawCenteredText(char* text, double y, double ce
     double x = centerX - (textWidth / 2.0);
     
     // Desenhe o texto no TFT
-    tft.setCursor(x, y);
+    tft.setCursor(x, y-3*textSize); //3 = half vertical size character at text size = 1
     tft.print(text);
 
     // Retorne as informações do texto
@@ -114,7 +63,17 @@ TextInfo TouchScreenController::drawCenteredText(char* text, double y, double ce
     return result;
 };
 
-void TouchScreenController::drawRoundButton(double x,double y,double r,int color,char* text, bool hasCenterPlay, bool hasBorder, double textDistance = 20, void (*onClick)()) {
+/*void TouchScreenController::drawRoundButton(
+  const double& x,
+  const double& y,
+  const double& r,
+  const int& color,
+  const char* text, 
+  const bool& hasCenterPlay,
+  const bool& hasBorder,
+  const double& textDistance,
+  void (*onClick)()
+) {
   if (hasBorder) {
     tft.drawCircle(x,y,r,color);
     tft.drawCircle(x,y,r-1.0,color);
@@ -153,13 +112,20 @@ void TouchScreenController::drawRoundButton(double x,double y,double r,int color
     drawCenteredText(text,y+r+textDistance,x);
   }
   if (onClick != nullptr) {
-    FREERAM_PRINT;
-    new TouchScreenClickEvent(nullptr,onClick);
-    FREERAM_PRINT;
+    //FREERAM_PRINT;
+    new ClickEvent(nullptr,onClick);
+    //FREERAM_PRINT;
   }
-};
+};*/
 
-void TouchScreenController::drawSmoothArc(double x_center, double y_center, double radius, double start_angle, double end_angle, uint16_t color) {
+/*void TouchScreenController::drawSmoothArc(
+  const double& x_center, 
+  const double& y_center, 
+  const double& radius, 
+  const double& start_angle, 
+  const double& end_angle, 
+  const uint16_t& color
+) {
   double angle;   // Ângulo atual em radianos
   double x_last = -1.0, y_last = -1.0;  // Últimas coordenadas desenhadas para garantir continuidade
 
@@ -171,7 +137,7 @@ void TouchScreenController::drawSmoothArc(double x_center, double y_center, doub
   for (angle = start_rad; angle <= end_rad; angle += 0.005) {
     double x = x_center + radius * cos(angle);  // Cálculo da coordenada X
     double y = y_center + radius * sin(angle);  // Cálculo da coordenada Y
-    //TouchScreenController::tft.drawPixel(x, y, color);
+
     // Desenha o pixel apenas se for uma nova coordenada (evitar sobreposição)
     if (x != x_last || y != y_last) {
       tft.drawPixel(x, y, color);  // Desenha o pixel na posição (x, y)
@@ -179,9 +145,16 @@ void TouchScreenController::drawSmoothArc(double x_center, double y_center, doub
       y_last = y;
     }
   }
-};
+};*/
 
-CircleInfo TouchScreenController::drawArcFromArrow(double x1, double y1, double x2, double y2, double arcHeight, int color) {  
+/*CircleInfo TouchScreenController::drawArcFromArrow(
+  const double& x1, 
+  const double& y1, 
+  const double& x2, 
+  const double& y2, 
+  const double& arcHeight, 
+  const int& color
+) {  
   DPoint p1,p2;
   p1.x = x1;
   p1.y = y1;
@@ -202,11 +175,11 @@ CircleInfo TouchScreenController::drawArcFromArrow(double x1, double y1, double 
       double hT = abs(y1-y2); //cateto vertical
       double wT = abs(x1-x2); //cateto horizontal
       double a1 = atan(hT/wT) * (180.0 / M_PI); //angulo oposto ao cateto vertical
-      Serial.println("ht="+String(hT)+",wt="+String(wT)+",a1="+String(a1));
+      //Serial.println("ht="+String(hT)+",wt="+String(wT)+",a1="+String(a1));
       if (x1 <= x2) { //flexa/arco para esquerda e para cima
         if (y1 <= y2) { //de 180 a 360
           centralAngle = 360.0 - (90-a1);
-        } else /*if (y1 > y2)*/ {
+        } else {
           centralAngle = 180.0 + (90-a1);
         } 
       } else {//flexa do arco para esquerda
@@ -239,23 +212,31 @@ CircleInfo TouchScreenController::drawArcFromArrow(double x1, double y1, double 
   result.r = r;
   drawSmoothArc(pc.x,pc.y,r,startAngle,startAngle+arcAngle,color);    
   return result;
-};
+};*/
 
-static void TouchScreenController::drawRoundedPlay(double cx,double cy,double radius,double round,int backgroundColor,int color,double multiplier) {
+static void TouchScreenController::drawRoundedPlay(
+  const double& cx,
+  const double& cy,
+  const double& r,
+  const double& round,
+  const int& backgroundColor,
+  const int& color,
+  const double& multiplier
+) {
   double angulo1 = 0;  // Vértice apontando para a direita (ponta do play)
   double angulo2 = 2 * M_PI / 3;  // 120 graus (em radianos)
   double angulo3 = 4 * M_PI / 3;  // 240 graus (em radianos)
 
   //define os pontos do triangulo do play
   // Coordenadas dos três vértices (p1, p2, p3)
-  double x1 = cx + radius * cos(angulo1) * multiplier;
-  double y1 = cy + radius * sin(angulo1) * multiplier;
+  double x1 = cx + r * cos(angulo1) * multiplier;
+  double y1 = cy + r * sin(angulo1) * multiplier;
   
-  double x2 = cx + radius * cos(angulo2) * multiplier;
-  double y2 = cy + radius * sin(angulo2) * multiplier;
+  double x2 = cx + r * cos(angulo2) * multiplier;
+  double y2 = cy + r * sin(angulo2) * multiplier;
   
-  double x3 = cx + radius * cos(angulo3) * multiplier;
-  double y3 = cy + radius * sin(angulo3) * multiplier;
+  double x3 = cx + r * cos(angulo3) * multiplier;
+  double y3 = cy + r * sin(angulo3) * multiplier;
   
 
   //desenha o play

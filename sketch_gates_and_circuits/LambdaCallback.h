@@ -12,7 +12,7 @@ class LambdaCallback : public ICallback {
   public: 
     T lambda;
 
-    LambdaCallback(T lambda) : lambda(lambda) {}
+    LambdaCallback(const T& lambda) : lambda(lambda) {}
 
     void call() override {
       lambda(); // Executa a lambda capturada

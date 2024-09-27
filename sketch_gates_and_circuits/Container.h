@@ -6,7 +6,6 @@
 class Container : public VisualComponent{
   public:
     using VisualComponent::VisualComponent;
-    void draw() override;
 };
 
 #endif //CONTAINER_H

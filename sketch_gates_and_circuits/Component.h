@@ -6,12 +6,12 @@
 class Component{
   protected:
     Component* parent = nullptr;
-    DoubleLinkedList<Component>* children = nullptr;
+    DoubleLinkedList<Component>* children = nullptr;    
   public:
     Component() {};
-    Component(const Component*& pParent) : parent(pParent) {};
-    ~Component();    
-    virtual void addChildren(const Component*& pComponent);
+    Component(const Component* pParent);
+    virtual ~Component();    
+    virtual void addChildren(const Component* pComponent);
 };
 
 #endif //COMPONENT_H

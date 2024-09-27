@@ -3,7 +3,7 @@
 #include <math.h>  // Para usar funções trigonométricas como asin
 
 
-double getArcAngle(double corda, double raio) {
+double getArcAngle(const double& corda, const double& raio) {
     // Verifica se os parâmetros são válidos para evitar erros
     if (corda > 2 * raio) {
         // Retorna -1 para indicar erro, pois a corda não pode ser maior que o diâmetro
@@ -20,7 +20,7 @@ double getArcAngle(double corda, double raio) {
 };
 
 // Função para calcular o ponto médio entre dois pontos
-DPoint calcularPontoMedio(DPoint p1, DPoint p2) {
+DPoint calcularPontoMedio(const DPoint& p1, const DPoint& p2) {
   DPoint pontoMedio;
   pontoMedio.x = (p1.x + p2.x) / 2.0;
   pontoMedio.y = (p1.y + p2.y) / 2.0;
@@ -28,7 +28,13 @@ DPoint calcularPontoMedio(DPoint p1, DPoint p2) {
 }
 
 // Função para calcular P3 com base nos comprimentos dos lados e nas coordenadas de P1 e P2
-DPoint calcularP3(double a, double b, double c, DPoint p1, DPoint p2) {
+DPoint calcularP3(
+  const double& a, 
+  const double& b, 
+  const double& c, 
+  const DPoint& p1, 
+  const DPoint& p2
+) {
   DPoint p3;
   
   // Encontrar o ponto médio entre P1 e P2
@@ -54,11 +60,11 @@ DPoint calcularP3(double a, double b, double c, DPoint p1, DPoint p2) {
   return p3;
 };
 
-double getCatetoFromPitagoras(double hip, double cat1) {
+double getCatetoFromPitagoras(const double& hip, const double& cat1) {
   return sqrt(abs(pow(hip,2.0) - pow(cat1,2.0)));
 }
 
-String boolToString(bool v) {
+String boolToString(const bool& v) {
   return v == true ? "true" : "false";
 }
 
